@@ -20,7 +20,7 @@ file(GLOB SRCFILES src/*.cpp)
 add_executable(parametrization "main.cpp" ${SRCFILES})
 target_link_libraries(parametrization                     
                     igl::core 
-                    # igl::opengl 
-                    # igl::opengl_glfw
+                    igl::opengl 
+                    igl::opengl_glfw
                     ${VTK_LIBRARIES}
                     )

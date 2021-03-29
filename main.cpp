@@ -1,8 +1,8 @@
 #include "tutte.h"
 #include "lscm.h"
 // #include <igl/read_triangle_mesh.h>
-// #include <igl/per_vertex_normals.h>
-// #include <igl/opengl/glfw/Viewer.h>
+#include <igl/per_vertex_normals.h>
+#include <igl/opengl/glfw/Viewer.h>
 #include <Eigen/Core>
 #include <string>
 #include <iostream>
@@ -23,6 +23,8 @@
 #include <vtkPointData.h>
 #include <vtkProperty.h>
 #include <vtkAutoInit.h>
+#include <vtkScalarsToColors.h>
+#include <vtkLookupTable.h>
 VTK_MODULE_INIT(vtkRenderingOpenGL2)
 VTK_MODULE_INIT(vtkInteractionStyle)
 
@@ -37,6 +39,12 @@ vtkSmartPointer<vtkActor> MakeActor( vtkSmartPointer<vtkPolyData> polydata ){
 	// vtkSmartPointer<vtkOpenGLSphereMapper> mapper = vtkSmartPointer<vtkOpenGLSphereMapper>::New();
 	// mapper->SetRadius(0.01);
 	vtkSmartPointer<vtkPolyDataMapper> mapper = vtkSmartPointer<vtkPolyDataMapper>::New();
+	mapper->SetScalarRange(1, 17);
+
+	vtkSmartPointer<vtkLookupTable> lut = vtkSmartPointer<vtkLookupTable>::New();
+	lut->SetUseBelowRangeColor(true);
+	lut->SetBelowRangeColor(1, 1, 1, 1);
+	mapper->SetLookupTable(lut);
 	mapper->SetInputData(polydata);
 
 
@@ -50,8 +58,11 @@ vtkSmartPointer<vtkActor> MakeActor( vtkSmartPointer<vtkPolyData> polydata ){
 
 vtkSmartPointer<vtkPolyData> UpdateV(Eigen::MatrixXd &V, vtkSmartPointer<vtkPolyData> polydata){
 	vtkSmartPointer<vtkPolyData> result = vtkSmartPointer<vtkPolyData>::New();
-	result->SetPoints(polydata->GetPoints());
-	result->SetPolys(polydata->GetPolys());
+	result->DeepCopy(polydata);
+
+	if(result->GetPointData()->GetNormals()) result->GetPointData()->RemoveArray("Normals");
+	// result->SetPoints(polydata->GetPoints());
+	// result->SetPolys(polydata->GetPolys());
 
 	for(vtkIdType i=0  ; i<result->GetNumberOfPoints() ; i++){
 		double point[3] = { V(i,0), V(i,1), V(i,2)  };
@@ -80,8 +91,10 @@ int main(int argc, char *argv[])
 
 
 	//Read Mesh using VTK
+	// vtkSmartPointer<vtkOBJReader> reader = vtkSmartPointer<vtkOBJReader>::New();
+	// reader->SetFileName( "../data/animal.obj" );
 	vtkSmartPointer<vtkXMLPolyDataReader> reader = vtkSmartPointer<vtkXMLPolyDataReader>::New();
-	reader->SetFileName( "//192.168.0.113/Imagoworks/Data/confident/Mesh/IntraoralScan/DAEYOU-cut/train/2930/137.vtp" );
+	reader->SetFileName( "//192.168.0.113/Imagoworks/Data/confident/Mesh/IntraoralScan/DAEYOU-cut/train/2930/136.vtp" );
 	reader->Update();
 	std::cout << "OBJ File Reading Done! " << std::endl;
 
@@ -139,21 +152,23 @@ int main(int argc, char *argv[])
 
 	auto normalizedPoly =  UpdateV( V, polydata );
 	vtkSmartPointer<vtkActor> normalizedActor = MakeActor(normalizedPoly);
-	normalizedActor->SetPosition(1, 0, 0);
-	// ren->AddActor(normalizedActor);
+	// normalizedActor->SetPosition(0, 0, 0);
+	ren->AddActor(normalizedActor);
 
 
 	auto tuttePoly = UpdateV(V_tutte, polydata);
 	vtkSmartPointer<vtkActor> tutteActor = MakeActor(tuttePoly);
 	tutteActor->SetPosition(2, 0, 0);
-	// ren->AddActor(tutteActor);
+	tutteActor->GetProperty()->SetRepresentationToWireframe();
+	tutteActor->GetProperty()->SetColor(1, 0, 0);
+	ren->AddActor(tutteActor);
 
 
-	auto lscmPoly = UpdateV(V_lscm, polydata);
-	vtkSmartPointer<vtkActor> lscmActor = MakeActor(lscmPoly);
-	lscmActor->SetPosition(3, 0, 0);
+	// auto lscmPoly = UpdateV(V_lscm, polydata);
+	// vtkSmartPointer<vtkActor> lscmActor = MakeActor(lscmPoly);
+	// lscmActor->SetPosition(3, 0, 0);
 	// lscmActor->GetProperty()->SetColor(1, 0, 0);
-	ren->AddActor(lscmActor);
+	// ren->AddActor(lscmActor);
 
 
 
