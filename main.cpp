@@ -21,7 +21,7 @@
 #include <vtkOpenGLSphereMapper.h>
 #include <vtkXMLPolyDataReader.h>
 #include <vtkPointData.h>
-
+#include <vtkProperty.h>
 #include <vtkAutoInit.h>
 VTK_MODULE_INIT(vtkRenderingOpenGL2)
 VTK_MODULE_INIT(vtkInteractionStyle)
@@ -152,7 +152,9 @@ int main(int argc, char *argv[])
 	auto lscmPoly = UpdateV(V_lscm, polydata);
 	vtkSmartPointer<vtkActor> lscmActor = MakeActor(lscmPoly);
 	lscmActor->SetPosition(3, 0, 0);
+	// lscmActor->GetProperty()->SetColor(1, 0, 0);
 	ren->AddActor(lscmActor);
+
 
 
 	// igl::opengl::glfw::Viewer viewer;
