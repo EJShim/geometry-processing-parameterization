@@ -1,8 +1,8 @@
 #include "tutte.h"
 #include "lscm.h"
-#include <igl/read_triangle_mesh.h>
-#include <igl/per_vertex_normals.h>
-#include <igl/opengl/glfw/Viewer.h>
+// #include <igl/read_triangle_mesh.h>
+// #include <igl/per_vertex_normals.h>
+// #include <igl/opengl/glfw/Viewer.h>
 #include <Eigen/Core>
 #include <string>
 #include <iostream>
