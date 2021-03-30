@@ -25,6 +25,11 @@
 #include <vtkAutoInit.h>
 #include <vtkScalarsToColors.h>
 #include <vtkLookupTable.h>
+#include <vtkCamera.h>
+#include <vtkPolyDataNormals.h>
+#include <vtkUnsignedCharArray.h>
+#include <vtkCurvatures.h>
+
 VTK_MODULE_INIT(vtkRenderingOpenGL2)
 VTK_MODULE_INIT(vtkInteractionStyle)
 
@@ -39,14 +44,15 @@ vtkSmartPointer<vtkActor> MakeActor( vtkSmartPointer<vtkPolyData> polydata ){
 	// vtkSmartPointer<vtkOpenGLSphereMapper> mapper = vtkSmartPointer<vtkOpenGLSphereMapper>::New();
 	// mapper->SetRadius(0.01);
 	vtkSmartPointer<vtkPolyDataMapper> mapper = vtkSmartPointer<vtkPolyDataMapper>::New();
-	mapper->SetScalarRange(1, 17);
+	// mapper->SetScalarRange(1, 17);
 
 	vtkSmartPointer<vtkLookupTable> lut = vtkSmartPointer<vtkLookupTable>::New();
 	lut->SetUseBelowRangeColor(true);
 	lut->SetBelowRangeColor(1, 1, 1, 1);
-	mapper->SetLookupTable(lut);
+	lut->SetRange(1, 17);
+	// mapper->SetLookupTable(lut);
 	mapper->SetInputData(polydata);
-
+	mapper->SetScalarRange(-0.25, 0.25);
 
 	vtkSmartPointer<vtkActor> actor = vtkSmartPointer<vtkActor>::New();
 	actor->SetMapper(mapper);
@@ -80,13 +86,22 @@ vtkSmartPointer<vtkPolyData> UpdateV(Eigen::MatrixXd &V, vtkSmartPointer<vtkPoly
 
 int main(int argc, char *argv[])
 {
+
+	if(argc < 2){
+		argv[1] = "//192.168.0.113/Imagoworks/Data/confident/Mesh/IntraoralScan/DAEYOU-cut/train/2930/136.vtp";
+	}
+
+	std::cout << argv[1] << std::endl;
+
 	
 	vtkSmartPointer<vtkRenderWindowInteractor> iren = vtkSmartPointer<vtkRenderWindowInteractor>::New();
 	iren->SetInteractorStyle( vtkSmartPointer<vtkInteractorStyleTrackballCamera>::New() );
 	vtkSmartPointer<vtkRenderWindow> renWin = vtkSmartPointer<vtkRenderWindow>::New();
 	iren->SetRenderWindow(renWin);
 	vtkSmartPointer<vtkRenderer> ren = vtkSmartPointer<vtkRenderer>::New();
+	ren->GetActiveCamera()->SetPosition(0, -1, 0);
 	renWin->AddRenderer(ren);
+	renWin->SetSize(512, 512);
 
 
 
@@ -94,19 +109,26 @@ int main(int argc, char *argv[])
 	// vtkSmartPointer<vtkOBJReader> reader = vtkSmartPointer<vtkOBJReader>::New();
 	// reader->SetFileName( "../data/animal.obj" );
 	vtkSmartPointer<vtkXMLPolyDataReader> reader = vtkSmartPointer<vtkXMLPolyDataReader>::New();
-	reader->SetFileName( "//192.168.0.113/Imagoworks/Data/confident/Mesh/IntraoralScan/DAEYOU-cut/train/2930/136.vtp" );
+	reader->SetFileName( argv[1] );
 	reader->Update();
-	std::cout << "OBJ File Reading Done! " << std::endl;
+	std::cout << "File Reading Done! " << std::endl;
 
 
 
 	vtkSmartPointer<vtkPolyData> polydata = reader->GetOutput();
-	vtkSmartPointer<vtkActor> originalActor = MakeActor(polydata);
-	// ren->AddActor(originalActor);
+	
+	//Curvature
+
+	vtkSmartPointer<vtkCurvatures> curvaturesFilter = vtkSmartPointer<vtkCurvatures>::New();
+	curvaturesFilter->SetInputData(polydata);
+	curvaturesFilter->SetCurvatureTypeToMinimum();
+	curvaturesFilter->SetCurvatureTypeToMaximum();
+	curvaturesFilter->SetCurvatureTypeToGaussian();
+	curvaturesFilter->SetCurvatureTypeToMean();
+	curvaturesFilter->Update();
 
 
-
-
+	polydata = curvaturesFilter->GetOutput();
 
 	//Convert to Eigen Matrix
 	Eigen::MatrixXd V( polydata->GetNumberOfPoints(), 3 );
@@ -161,14 +183,14 @@ int main(int argc, char *argv[])
 	tutteActor->SetPosition(2, 0, 0);
 	tutteActor->GetProperty()->SetRepresentationToWireframe();
 	tutteActor->GetProperty()->SetColor(1, 0, 0);
-	ren->AddActor(tutteActor);
+	// ren->AddActor(tutteActor);
 
 
-	// auto lscmPoly = UpdateV(V_lscm, polydata);
-	// vtkSmartPointer<vtkActor> lscmActor = MakeActor(lscmPoly);
-	// lscmActor->SetPosition(3, 0, 0);
-	// lscmActor->GetProperty()->SetColor(1, 0, 0);
-	// ren->AddActor(lscmActor);
+	auto lscmPoly = UpdateV(V_lscm, polydata);
+	vtkSmartPointer<vtkActor> lscmActor = MakeActor(lscmPoly);
+	lscmActor->SetPosition(3, 0, 0);
+	lscmActor->GetProperty()->SetColor(1, 0, 0);
+	ren->AddActor(lscmActor);
 
 
 
