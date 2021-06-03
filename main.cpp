@@ -27,6 +27,7 @@
 #include <vtkPolyDataNormals.h>
 #include <vtkUnsignedCharArray.h>
 #include <vtkCurvatures.h>
+#include <vtkSTLReader.h>
 
 VTK_MODULE_INIT(vtkRenderingOpenGL2)
 VTK_MODULE_INIT(vtkInteractionStyle)
@@ -50,7 +51,7 @@ vtkSmartPointer<vtkActor> MakeActor( vtkSmartPointer<vtkPolyData> polydata ){
 	lut->SetRange(1, 17);
 	// mapper->SetLookupTable(lut);
 	mapper->SetInputData(polydata);
-	mapper->SetScalarRange(-0.25, 0.25);
+	mapper->SetScalarRange(-0.5, 0.5);
 
 	vtkSmartPointer<vtkActor> actor = vtkSmartPointer<vtkActor>::New();
 	actor->SetMapper(mapper);
@@ -86,7 +87,7 @@ int main(int argc, char *argv[])
 {
 
 	if(argc < 2){
-		argv[1] = "//192.168.0.113/Imagoworks/Data/confident/Mesh/IntraoralScan/DAEYOU-cut/train/2930/mx.vtp";
+		argv[1] = "../Mandibular_orig.stl";
 	}
 
 	std::cout << argv[1] << std::endl;
@@ -106,7 +107,7 @@ int main(int argc, char *argv[])
 	//Read Mesh using VTK
 	// vtkSmartPointer<vtkOBJReader> reader = vtkSmartPointer<vtkOBJReader>::New();
 	// reader->SetFileName( "../data/animal.obj" );
-	vtkSmartPointer<vtkXMLPolyDataReader> reader = vtkSmartPointer<vtkXMLPolyDataReader>::New();
+	vtkSmartPointer<vtkSTLReader> reader = vtkSmartPointer<vtkSTLReader>::New();
 	reader->SetFileName( argv[1] );
 	reader->Update();
 	std::cout << "File Reading Done! " << std::endl;
@@ -120,9 +121,9 @@ int main(int argc, char *argv[])
 	vtkSmartPointer<vtkCurvatures> curvaturesFilter = vtkSmartPointer<vtkCurvatures>::New();
 	curvaturesFilter->SetInputData(polydata);
 	curvaturesFilter->SetCurvatureTypeToMinimum();
-	curvaturesFilter->SetCurvatureTypeToMaximum();
-	curvaturesFilter->SetCurvatureTypeToGaussian();
-	curvaturesFilter->SetCurvatureTypeToMean();
+	// curvaturesFilter->SetCurvatureTypeToMaximum();
+	// curvaturesFilter->SetCurvatureTypeToGaussian();
+	// curvaturesFilter->SetCurvatureTypeToMean();
 	curvaturesFilter->Update();
 
 

@@ -1,12 +1,12 @@
-cmake_minimum_required(VERSION 2.6)
+cmake_minimum_required(VERSION 3.18cc)
 project(parametrization)
 set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} ${CMAKE_CURRENT_SOURCE_DIR}/cmake)
 set(EXECUTABLE_OUTPUT_PATH  ${CMAKE_CURRENT_BINARY_DIR}/bin)
 
 ### libIGL options: choose between header only and compiled static library
-option(LIBIGL_USE_STATIC_LIBRARY     "Use libigl as static library" ON)
-# option(LIBIGL_WITH_OPENGL            "Use OpenGL"         ON)
-# option(LIBIGL_WITH_OPENGL_GLFW       "Use GLFW"           ON)
+# option(LIBIGL_USE_STATIC_LIBRARY     "Use libigl as static library" ON)
+include_directories("libigl/include")
+include_directories("libigl/external/eigen")
 
 find_package(LIBIGL REQUIRED)
 find_package(VTK REQUIRED)
@@ -19,6 +19,6 @@ file(GLOB SRCFILES src/*.cpp)
 
 add_executable(parametrization "main.cpp" ${SRCFILES})
 target_link_libraries(parametrization                     
-                    igl::core 
+                    # igl::core 
                     ${VTK_LIBRARIES}
                     )
