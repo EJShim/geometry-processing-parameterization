@@ -1,8 +1,6 @@
 #include "tutte.h"
 #include "lscm.h"
-// #include <igl/read_triangle_mesh.h>
 #include <igl/per_vertex_normals.h>
-#include <igl/opengl/glfw/Viewer.h>
 #include <Eigen/Core>
 #include <string>
 #include <iostream>
@@ -88,7 +86,7 @@ int main(int argc, char *argv[])
 {
 
 	if(argc < 2){
-		argv[1] = "//192.168.0.113/Imagoworks/Data/confident/Mesh/IntraoralScan/DAEYOU-cut/train/2930/136.vtp";
+		argv[1] = "//192.168.0.113/Imagoworks/Data/confident/Mesh/IntraoralScan/DAEYOU-cut/train/2930/mx.vtp";
 	}
 
 	std::cout << argv[1] << std::endl;
@@ -144,7 +142,6 @@ int main(int argc, char *argv[])
 		V(i, 2) = point[2];
 	}
 
-	
 	for(int i=0 ; i<polydata->GetNumberOfCells() ; i++){
 		vtkIdList* ids =  polydata->GetCell(i)->GetPointIds();		
 		
@@ -152,7 +149,6 @@ int main(int argc, char *argv[])
 		F(i, 0) = ids->GetId(0);
 		F(i, 1) = ids->GetId(1);
 		F(i, 2) = ids->GetId(2); 
-
 	}
 	
 	
@@ -161,14 +157,14 @@ int main(int argc, char *argv[])
 
 	Eigen::MatrixXd U_lscm, U_tutte, U;
 	tutte(V,F,U_tutte);
-	lscm(V,F,U_lscm);
+	// lscm(V,F,U_lscm);
 
 	normalize(V);
 	normalize(U_tutte);
-	normalize(U_lscm);
+	// normalize(U_lscm);
 
 	Eigen::MatrixXd V_tutte = (Eigen::MatrixXd(V.rows(),3) << U_tutte.col(0),Eigen::VectorXd::Zero(V.rows()),U_tutte.col(1)).finished();
-	Eigen::MatrixXd V_lscm = (Eigen::MatrixXd(V.rows(),3) << U_lscm.col(0),Eigen::VectorXd::Zero(V.rows()),U_lscm.col(1)).finished();
+	// Eigen::MatrixXd V_lscm = (Eigen::MatrixXd(V.rows(),3) << U_lscm.col(0),Eigen::VectorXd::Zero(V.rows()),U_lscm.col(1)).finished();
 	
 
 
@@ -183,14 +179,14 @@ int main(int argc, char *argv[])
 	tutteActor->SetPosition(2, 0, 0);
 	tutteActor->GetProperty()->SetRepresentationToWireframe();
 	tutteActor->GetProperty()->SetColor(1, 0, 0);
-	// ren->AddActor(tutteActor);
+	ren->AddActor(tutteActor);
 
 
-	auto lscmPoly = UpdateV(V_lscm, polydata);
-	vtkSmartPointer<vtkActor> lscmActor = MakeActor(lscmPoly);
-	lscmActor->SetPosition(3, 0, 0);
-	lscmActor->GetProperty()->SetColor(1, 0, 0);
-	ren->AddActor(lscmActor);
+	// auto lscmPoly = UpdateV(V_lscm, polydata);
+	// vtkSmartPointer<vtkActor> lscmActor = MakeActor(lscmPoly);
+	// lscmActor->SetPosition(3, 0, 0);
+	// lscmActor->GetProperty()->SetColor(1, 0, 0);
+	// ren->AddActor(lscmActor);
 
 
 
