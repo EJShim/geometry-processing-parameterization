@@ -14,5 +14,5 @@
 //   U  #U by 2 list of mesh UV parameterization coordinates
 //
 Eigen::MatrixXd tutte(Eigen::MatrixXd V, Eigen::MatrixXi F);
-Eigen::MatrixXd tutte(Eigen::MatrixXd V, Eigen::MatrixXi F, Eigen::VectorXi boundary);
+Eigen::MatrixXd tutte(Eigen::MatrixXd V, Eigen::MatrixXi F, Eigen::MatrixXi E, Eigen::VectorXi boundary);
 #endif

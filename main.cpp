@@ -33,6 +33,8 @@
 #include <vtkCleanPolyData.h>
 #include <vtkPolyDataConnectivityFilter.h>
 #include <vtkStripper.h>
+#include <vtkExtractEdges.h>
+
 
 VTK_MODULE_INIT(vtkRenderingOpenGL2)
 VTK_MODULE_INIT(vtkInteractionStyle)
@@ -207,12 +209,25 @@ int main(int argc, char *argv[])
 		F(i, 2) = ids->GetId(2); 
 	}
 
+	//Generate edges using VTK
+	vtkSmartPointer<vtkExtractEdges> edgeExtractor = vtkSmartPointer<vtkExtractEdges>::New();
+	edgeExtractor->SetInputData(polydata);
+	edgeExtractor->Update();
+	vtkSmartPointer<vtkPolyData> edgePoly = edgeExtractor->GetOutput();
+	Eigen::MatrixXi E( edgePoly->GetNumberOfCells(), 2 );
+	for(int i=0 ; i<edgePoly->GetNumberOfCells() ; i++){
+		vtkIdList* ids =  edgePoly->GetCell(i)->GetPointIds();				
+		E(i, 0) = ids->GetId(0);
+		E(i, 1) = ids->GetId(1);		
+	}
+
+
 	//Generate Boundary using VTK
 	Eigen::VectorXi boundary =  GenerateBoundary(polydata);
 	
 
 	//Calculate Parameterization
-	Eigen::MatrixXd U_tutte = tutte(V, F, boundary);
+	Eigen::MatrixXd U_tutte = tutte(V, F, E, boundary);
 
 	//Make it 3D with normalization
 	normalize(V);
