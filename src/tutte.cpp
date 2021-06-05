@@ -6,24 +6,36 @@
 #include <fstream>
 #include <igl/min_quad_with_fixed.h>
 #include <igl/repdiag.h>
+#include <igl/map_vertices_to_circle.h>
+#include <igl/harmonic.h>
+#include <vtkSmartPointer.h>
+#include <vtkPolyData.h>
 
-void tutte( const Eigen::MatrixXd & V, const Eigen::MatrixXi & F, Eigen::MatrixXd & U)
+
+
+Eigen::MatrixXd tutte( Eigen::MatrixXd V, Eigen::MatrixXi F)
 {
-	std::vector<int> L;
-	igl::boundary_loop(F,L);
 
-	std::cout <<  L.size() << std::endl;
+
+	//Calculate Boundary, make it some shape
+	Eigen::VectorXi boundary;
+	igl::boundary_loop(F,boundary);
+
+	Eigen::MatrixXd boundary_uv(boundary.size(),2);
+	// igl::map_vertices_to_circle(V,boundary,boundary_uv);
+	double pi=3.14159265359;
+	for (int i=0; i<boundary.rows(); i++){
+		boundary_uv.row(i)=Eigen::RowVector2d(cos(pi*2/boundary.size()*i),sin(pi*2/boundary.size()*i));		
+	}
+
+	// igl::harmonic(V,F,boundary,boundary_uv,0,U);
+	// return;	
+
+
+	//Calculate Edge
 	Eigen::MatrixXi E;
 	igl::edges(F,E);
-
-
-	double pi=3.14159265359;
-	Eigen::VectorXi b(L.size());
-	Eigen::MatrixXd bc(L.size(),2);
-	for (int i=0; i<L.size(); i++){
-		bc.row(i)=Eigen::RowVector2d(cos(pi*2/L.size()*i),sin(pi*2/L.size()*i));
-		b(i)=L[i];
-	}
+	
 
 	Eigen::VectorXd diag=Eigen::VectorXd::Zero(V.rows());	
 	typedef Eigen::Triplet<double> T;
@@ -39,7 +51,7 @@ void tutte( const Eigen::MatrixXd & V, const Eigen::MatrixXi & F, Eigen::MatrixX
 	for (int i=0; i<V.rows(); i++)
 		list.push_back(T(i,i,diag(i)));
 
-	std::cout << list.size() << std::endl;
+	// std::cout << list.size() << std::endl;
 
 	Eigen::SparseMatrix<double> A;
 	A.resize(V.rows(),V.rows());
@@ -47,14 +59,14 @@ void tutte( const Eigen::MatrixXd & V, const Eigen::MatrixXi & F, Eigen::MatrixX
 	const Eigen::VectorXd B_flat = Eigen::VectorXd::Zero(V.rows());
 	Eigen::SparseMatrix<double> Aeq = Eigen::SparseMatrix<double>();
 	Eigen::VectorXd Beq = Eigen::VectorXd();
+	
+	Eigen::MatrixXd U_tutte;
+	U_tutte.resize(V.rows(),2);
 
-	U.resize(V.rows(),2);
+	
+	igl::min_quad_with_fixed(A, B_flat, boundary, boundary_uv, Aeq, Beq, false, U_tutte  );
 
-	std::cout << "A : " << A.rows() << "," << A.cols() <<  std::endl;
-	std::cout << "B_flat : " << B_flat.rows() << "," << B_flat.cols() <<  std::endl;
-	std::cout << "b : " << b.rows() << "," << b.cols() <<  std::endl;
-	std::cout << "bc : " << bc.rows() << "," << bc.cols() <<  std::endl;
-	std::cout << "Aeq : " << Aeq.rows() << "," << Aeq.cols() <<  std::endl;
-	std::cout << "Beq : " << Beq.rows() << "," << Beq.cols() <<  std::endl;
-	igl::min_quad_with_fixed(A, B_flat, b, bc, Aeq, Beq, false, U  );
+
+
+	return U_tutte;
 }

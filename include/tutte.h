@@ -1,6 +1,7 @@
 #ifndef TUTTE_H
 #define TUTTE_H
 #include <Eigen/Core>
+
 // Given a 3D mesh (`V`,`F`) with a disk topology (i.e., a manifold with single
 // boundary), compute a 2D parameterization according to Tutte's mapping inside
 // the unit disk. All boundary vertices should be mapped to the unit circle and
@@ -12,8 +13,5 @@
 // Outputs:
 //   U  #U by 2 list of mesh UV parameterization coordinates
 //
-void tutte(
-  const Eigen::MatrixXd & V,
-  const Eigen::MatrixXi & F,
-  Eigen::MatrixXd & U);
+Eigen::MatrixXd tutte(Eigen::MatrixXd V, Eigen::MatrixXi F);
 #endif

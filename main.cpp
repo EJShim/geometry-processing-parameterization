@@ -129,11 +129,12 @@ int main(int argc, char *argv[])
 
 	polydata = curvaturesFilter->GetOutput();
 
+	
+
 	//Convert to Eigen Matrix
 	Eigen::MatrixXd V( polydata->GetNumberOfPoints(), 3 );
 	Eigen::MatrixXi F( polydata->GetNumberOfCells(), 3 );
-	
-	
+
 	for(int i=0 ; i<polydata->GetNumberOfPoints() ; i++){
 		double* point = polydata->GetPoint(i);
 
@@ -151,24 +152,18 @@ int main(int argc, char *argv[])
 		F(i, 1) = ids->GetId(1);
 		F(i, 2) = ids->GetId(2); 
 	}
-	
-	
 
 
+	//Calculate Parameterization
+	Eigen::MatrixXd U_tutte = tutte(V, F);
 
-	Eigen::MatrixXd U_lscm, U_tutte, U;
-	tutte(V,F,U_tutte);
-	// lscm(V,F,U_lscm);
-
+	//Make it 3D with normalization
 	normalize(V);
 	normalize(U_tutte);
-	// normalize(U_lscm);
-
-	Eigen::MatrixXd V_tutte = (Eigen::MatrixXd(V.rows(),3) << U_tutte.col(0),Eigen::VectorXd::Zero(V.rows()),U_tutte.col(1)).finished();
-	// Eigen::MatrixXd V_lscm = (Eigen::MatrixXd(V.rows(),3) << U_lscm.col(0),Eigen::VectorXd::Zero(V.rows()),U_lscm.col(1)).finished();
+	Eigen::MatrixXd V_tutte = (Eigen::MatrixXd(V.rows(),3) << U_tutte.col(0),Eigen::VectorXd::Zero(V.rows()),U_tutte.col(1)).finished();		
 	
 
-
+	//Render
 	auto normalizedPoly =  UpdateV( V, polydata );
 	vtkSmartPointer<vtkActor> normalizedActor = MakeActor(normalizedPoly);
 	// normalizedActor->SetPosition(0, 0, 0);
@@ -183,66 +178,6 @@ int main(int argc, char *argv[])
 	ren->AddActor(tutteActor);
 
 
-	// auto lscmPoly = UpdateV(V_lscm, polydata);
-	// vtkSmartPointer<vtkActor> lscmActor = MakeActor(lscmPoly);
-	// lscmActor->SetPosition(3, 0, 0);
-	// lscmActor->GetProperty()->SetColor(1, 0, 0);
-	// ren->AddActor(lscmActor);
-
-
-
-	// igl::opengl::glfw::Viewer viewer;
-	// bool plot_parameterization = false;
-	// const auto & update = [&]()
-	// {
-	// 	if(plot_parameterization)
-	// 	{
-	// 		// Viewer wants 3D coordinates, so pad UVs with column of zeros
-	// 		viewer.data().set_vertices( V_tutte );
-	// 		std::cout << "Plot Parameterization" << std::endl;
-	// 	}else
-	// 	{
-	// 		viewer.data().set_vertices(V);
-	// 	}
-
-
-	// 	viewer.data().compute_normals();
-	// 	viewer.data().set_uv(U*10);
-	// };
-	// viewer.callback_key_pressed = 
-	// 	[&](igl::opengl::glfw::Viewer &, unsigned int key, int)
-	// 	{
-	// 		switch(key)
-	// 		{
-	// 		case ' ':
-	// 			plot_parameterization ^= 1;
-	// 			break;
-	// 		case 'l':
-	// 			U = U_lscm;
-	// 			break;
-	// 		case 't':
-	// 			U = U_tutte;
-	// 			break;
-	// 		case 'C':
-	// 		case 'c':
-	// 			viewer.data().show_texture ^= 1;
-	// 			break;
-	// 		default:
-	// 			return false;
-	// 		}
-	// 		update();
-	// 		return true;
-	// 	};
-
-	// U = U_lscm;
-	// viewer.data().set_mesh(V,F);
-	// Eigen::MatrixXd N;
-	// igl::per_vertex_normals(V,F,N);
-	// viewer.data().set_colors(N.array()*0.5+0.5);
-	// update();
-	// viewer.data().show_texture = true;
-	// viewer.data().show_lines = false;
-	// viewer.launch();
 
 	ren->ResetCamera();
 	renWin->Render();
