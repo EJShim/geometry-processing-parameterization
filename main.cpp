@@ -28,6 +28,11 @@
 #include <vtkUnsignedCharArray.h>
 #include <vtkCurvatures.h>
 #include <vtkSTLReader.h>
+#include <vtkIdFilter.h>
+#include <vtkFeatureEdges.h>
+#include <vtkCleanPolyData.h>
+#include <vtkPolyDataConnectivityFilter.h>
+#include <vtkStripper.h>
 
 VTK_MODULE_INIT(vtkRenderingOpenGL2)
 VTK_MODULE_INIT(vtkInteractionStyle)
@@ -82,6 +87,55 @@ vtkSmartPointer<vtkPolyData> UpdateV(Eigen::MatrixXd &V, vtkSmartPointer<vtkPoly
 	return result;
 }
 
+Eigen::VectorXi GenerateBoundary(vtkSmartPointer<vtkPolyData> polydata){
+
+	vtkSmartPointer<vtkIdFilter> idFilter = vtkSmartPointer<vtkIdFilter>::New();
+	idFilter->SetInputData(polydata);
+	idFilter->SetPointIdsArrayName("ids");
+	idFilter->SetPointIds(true);
+	idFilter->SetCellIds(false);
+
+	vtkSmartPointer<vtkFeatureEdges> featureEdges = vtkSmartPointer<vtkFeatureEdges>::New();
+	featureEdges->SetInputConnection(idFilter->GetOutputPort());
+	featureEdges->BoundaryEdgesOn();
+	featureEdges->FeatureEdgesOff();
+	featureEdges->ManifoldEdgesOff();
+	featureEdges->NonManifoldEdgesOff();
+
+	vtkSmartPointer<vtkPolyDataConnectivityFilter> conFilter = vtkSmartPointer<vtkPolyDataConnectivityFilter>::New();
+	conFilter->SetInputConnection(featureEdges->GetOutputPort());
+	conFilter->SetExtractionModeToLargestRegion();
+
+
+	vtkSmartPointer<vtkStripper> stripper = vtkSmartPointer<vtkStripper>::New();
+	stripper->SetInputConnection(conFilter->GetOutputPort());
+	stripper->JoinContiguousSegmentsOn();
+
+	vtkSmartPointer<vtkCleanPolyData> cleanPoly = vtkSmartPointer<vtkCleanPolyData>::New();
+	cleanPoly->SetInputConnection(stripper->GetOutputPort());
+	
+	vtkSmartPointer<vtkStripper> stripper2 = vtkSmartPointer<vtkStripper>::New();
+	stripper2->SetInputConnection(cleanPoly->GetOutputPort());
+	stripper2->JoinContiguousSegmentsOn();
+
+	vtkSmartPointer<vtkCleanPolyData> cleanPoly2 = vtkSmartPointer<vtkCleanPolyData>::New();
+	cleanPoly2->SetInputConnection(stripper2->GetOutputPort());
+	cleanPoly2->Update();
+	
+	vtkSmartPointer<vtkPolyData> boundaryPoly = cleanPoly2->GetOutput();
+
+
+	Eigen::VectorXi boundary( boundaryPoly->GetNumberOfPoints());
+	
+	for(int i=0 ; i<boundaryPoly->GetNumberOfPoints() ; i++){
+		
+		int tuple = boundaryPoly->GetPointData()->GetArray("ids")->GetTuple1(i);
+		boundary(i) = tuple;		
+	}	
+
+	return boundary;
+}
+
 
 int main(int argc, char *argv[])
 {
@@ -114,7 +168,7 @@ int main(int argc, char *argv[])
 
 
 
-	vtkSmartPointer<vtkPolyData> polydata = reader->GetOutput();
+	vtkSmartPointer<vtkPolyData> polydata = reader->GetOutput();	
 	
 	//Curvature
 
@@ -153,9 +207,12 @@ int main(int argc, char *argv[])
 		F(i, 2) = ids->GetId(2); 
 	}
 
+	//Generate Boundary using VTK
+	Eigen::VectorXi boundary =  GenerateBoundary(polydata);
+	
 
 	//Calculate Parameterization
-	Eigen::MatrixXd U_tutte = tutte(V, F);
+	Eigen::MatrixXd U_tutte = tutte(V, F, boundary);
 
 	//Make it 3D with normalization
 	normalize(V);
